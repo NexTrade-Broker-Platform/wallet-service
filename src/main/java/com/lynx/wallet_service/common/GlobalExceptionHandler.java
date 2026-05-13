@@ -3,6 +3,7 @@ package com.lynx.wallet_service.common;
 import com.lynx.wallet_service.wallet.exception.InsufficientFundsException;
 import com.lynx.wallet_service.wallet.exception.InsufficientReservedBalanceException;
 import com.lynx.wallet_service.wallet.exception.WalletNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -43,6 +44,16 @@ public class GlobalExceptionHandler {
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             details.put(error.getField(), error.getDefaultMessage());
         }
+        return buildError("VALIDATION_ERROR", "The request payload failed validation.", details, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        Map<String, String> details = new HashMap<>();
+        ex.getConstraintViolations().forEach(cv -> {
+            String field = cv.getPropertyPath().toString();
+            details.put(field.contains(".") ? field.substring(field.lastIndexOf('.') + 1) : field, cv.getMessage());
+        });
         return buildError("VALIDATION_ERROR", "The request payload failed validation.", details, HttpStatus.BAD_REQUEST);
     }
 

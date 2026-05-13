@@ -11,7 +11,6 @@ import com.lynx.wallet_service.wallet.exception.WalletNotFoundException;
 import com.lynx.wallet_service.wallet.repository.WalletRepository;
 import com.lynx.wallet_service.wallet.repository.WalletTransactionRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +35,7 @@ public class WalletService {
     @Transactional
     public DepositResponse deposit(UUID userId, DepositRequest request) {
         Wallet wallet = walletRepository
-                .findByUserIdAndCurrency(userId, request.getCurrency())
+                .findByUserIdAndCurrencyAndIsActiveTrue(userId, request.getCurrency())
                 .orElseGet(() -> createWallet(userId, request.getCurrency()));
 
         wallet.setAvailableBalance(wallet.getAvailableBalance().add(request.getAmount()));
@@ -58,7 +57,7 @@ public class WalletService {
 
     @Transactional
     public WithdrawalResponse withdraw(UUID userId, WithdrawalRequest request) {
-        Wallet wallet = findWalletByUserAndCurrency(userId, request.getCurrency());
+        Wallet wallet = findWalletByUserAndCurrencyForUpdate(userId, request.getCurrency());
 
         if (wallet.getAvailableBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientFundsException("Not enough available balance to withdraw.");
@@ -86,6 +85,13 @@ public class WalletService {
         return toWalletResponse(wallet);
     }
 
+    public List<WalletResponse> getAllWallets(UUID userId) {
+        return walletRepository.findAllByUserIdAndIsActiveTrue(userId)
+                .stream()
+                .map(this::toWalletResponse)
+                .collect(Collectors.toList());
+    }
+
     public TransactionHistoryResponse getTransactionHistory(UUID userId, String currency, int page, int limit) {
         Wallet wallet = findWalletByUserAndCurrency(userId, currency);
 
@@ -111,13 +117,13 @@ public class WalletService {
 
     @Transactional
     public Wallet createWalletforUser(CreateWalletRequest request) {
-        UUID userId = request.getUserId();
-        return createWallet(userId, "USD");
+        String currency = request.getCurrency() != null ? request.getCurrency() : "USD";
+        return createWallet(request.getUserId(), currency);
     }
 
     @Transactional
     public void reserveFunds(ReserveFundsRequest request) {
-        Wallet wallet = findWalletByUserAndCurrency(request.getUserId(), request.getCurrency());
+        Wallet wallet = findWalletByUserAndCurrencyForUpdate(request.getUserId(), request.getCurrency());
 
         if (wallet.getAvailableBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientFundsException("Not enough available balance to place this order.");
@@ -129,6 +135,7 @@ public class WalletService {
 
         WalletTransaction transaction = WalletTransaction.builder()
                 .walletId(wallet.getId())
+                .referenceId(request.getReferenceId())
                 .transactionType(TransactionType.ORDER_HOLD)
                 .amount(request.getAmount())
                 .build();
@@ -137,7 +144,7 @@ public class WalletService {
 
     @Transactional
     public void releaseFunds(ReleaseFundsRequest request) {
-        Wallet wallet = findWalletByUserAndCurrency(request.getUserId(), request.getCurrency());
+        Wallet wallet = findWalletByUserAndCurrencyForUpdate(request.getUserId(), request.getCurrency());
 
         if (wallet.getReservedBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientReservedBalanceException(
@@ -150,6 +157,7 @@ public class WalletService {
 
         WalletTransaction transaction = WalletTransaction.builder()
                 .walletId(wallet.getId())
+                .referenceId(request.getReferenceId())
                 .transactionType(TransactionType.ORDER_RELEASE)
                 .amount(request.getAmount())
                 .build();
@@ -158,7 +166,7 @@ public class WalletService {
 
     @Transactional
     public void captureFunds(CaptureFundsRequest request) {
-        Wallet wallet = findWalletByUserAndCurrency(request.getUserId(), request.getCurrency());
+        Wallet wallet = findWalletByUserAndCurrencyForUpdate(request.getUserId(), request.getCurrency());
 
         if (wallet.getReservedBalance().compareTo(request.getReservedAmount()) < 0) {
             throw new InsufficientReservedBalanceException(
@@ -176,6 +184,7 @@ public class WalletService {
 
         WalletTransaction transaction = WalletTransaction.builder()
                 .walletId(wallet.getId())
+                .referenceId(request.getReferenceId())
                 .transactionType(TransactionType.ORDER_HOLD)
                 .amount(request.getActualCost())
                 .build();
@@ -195,7 +204,13 @@ public class WalletService {
     }
 
     private Wallet findWalletByUserAndCurrency(UUID userId, String currency) {
-        return walletRepository.findByUserIdAndCurrency(userId, currency)
+        return walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, currency)
+                .orElseThrow(() -> new WalletNotFoundException(
+                        "Wallet not found for user " + userId + " with currency " + currency));
+    }
+
+    private Wallet findWalletByUserAndCurrencyForUpdate(UUID userId, String currency) {
+        return walletRepository.findByUserIdAndCurrencyForUpdate(userId, currency)
                 .orElseThrow(() -> new WalletNotFoundException(
                         "Wallet not found for user " + userId + " with currency " + currency));
     }

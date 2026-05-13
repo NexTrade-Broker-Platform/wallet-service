@@ -9,5 +9,5 @@ import java.util.UUID;
 public class CreateWalletRequest {
     @NotNull(message = "User ID is required")
     private UUID userId;
-    //I don't think anything else is required here
+    private String currency;
 }

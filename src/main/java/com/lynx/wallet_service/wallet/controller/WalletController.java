@@ -4,107 +4,84 @@ import com.lynx.wallet_service.wallet.dto.request.*;
 import com.lynx.wallet_service.wallet.dto.response.*;
 import com.lynx.wallet_service.wallet.service.WalletService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Objects;
-
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/funds")
 @RequiredArgsConstructor
+@Validated
 public class WalletController {
 
     private final WalletService walletService;
-
-    @Value("${internal.api-key}")
-    private String internalApiKey;
-
-    private void validateKey(String key){
-        if (!Objects.equals(internalApiKey, key)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid secret API key");
-        }
-    }
 
     // ─── User-facing endpoints (called via API Gateway) ───────────────────────
 
     @PostMapping("/deposit")
     public ResponseEntity<DepositResponse> deposit(
-            @RequestHeader("X-INTERNAL-KEY") String key,
             @RequestHeader("X-User-Id") UUID userId,
             @Valid @RequestBody DepositRequest request) {
-        validateKey(key);
         return ResponseEntity.ok(walletService.deposit(userId, request));
     }
 
     @PostMapping("/withdraw")
     public ResponseEntity<WithdrawalResponse> withdraw(
-            @RequestHeader("X-INTERNAL-KEY") String key,
             @RequestHeader("X-User-Id") UUID userId,
             @Valid @RequestBody WithdrawalRequest request) {
-        validateKey(key);
         return ResponseEntity.ok(walletService.withdraw(userId, request));
     }
 
     @GetMapping
     public ResponseEntity<WalletResponse> getWallet(
-            @RequestHeader("X-INTERNAL-KEY") String key,
             @RequestHeader("X-User-Id") UUID userId,
             @RequestParam String currency) {
-        validateKey(key);
         return ResponseEntity.ok(walletService.getWallet(userId, currency));
+    }
+
+    @GetMapping("/balances")
+    public ResponseEntity<List<WalletResponse>> getAllWallets(
+            @RequestHeader("X-User-Id") UUID userId) {
+        return ResponseEntity.ok(walletService.getAllWallets(userId));
     }
 
     @GetMapping("/transactions")
     public ResponseEntity<TransactionHistoryResponse> getTransactionHistory(
-            @RequestHeader("X-INTERNAL-KEY") String key,
             @RequestHeader("X-User-Id") UUID userId,
             @RequestParam String currency,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit) {
-        validateKey(key);
+            @RequestParam(defaultValue = "1") @Min(value = 1, message = "Page must be at least 1") int page,
+            @RequestParam(defaultValue = "10") @Min(value = 1, message = "Limit must be at least 1") @Max(value = 50, message = "Limit must be at most 50") int limit) {
         return ResponseEntity.ok(walletService.getTransactionHistory(userId, currency, page, limit));
     }
 
     // ─── Internal endpoints (called by Order Service) ─────────────────────────
 
     @PostMapping("/reserve")
-    public ResponseEntity<Void> reserveFunds(
-            @RequestHeader("X-INTERNAL-KEY") String key,
-            @Valid @RequestBody ReserveFundsRequest request) {
-        validateKey(key);
+    public ResponseEntity<Void> reserveFunds(@Valid @RequestBody ReserveFundsRequest request) {
         walletService.reserveFunds(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/release")
-    public ResponseEntity<Void> releaseFunds(
-            @RequestHeader("X-INTERNAL-KEY") String key,
-            @Valid @RequestBody ReleaseFundsRequest request) {
-        validateKey(key);
+    public ResponseEntity<Void> releaseFunds(@Valid @RequestBody ReleaseFundsRequest request) {
         walletService.releaseFunds(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/capture")
-    public ResponseEntity<Void> captureFunds(
-            @RequestHeader("X-INTERNAL-KEY") String key,
-            @Valid @RequestBody CaptureFundsRequest request) {
-        validateKey(key);
+    public ResponseEntity<Void> captureFunds(@Valid @RequestBody CaptureFundsRequest request) {
         walletService.captureFunds(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/create-wallet")
-    public ResponseEntity<Void> createWallet(
-            @RequestHeader("X-INTERNAL-KEY") String key,
-            @Valid @RequestBody CreateWalletRequest request){
-        validateKey(key);
+    public ResponseEntity<Void> createWallet(@Valid @RequestBody CreateWalletRequest request) {
         walletService.createWalletforUser(request);
         return ResponseEntity.ok().build();
     }
