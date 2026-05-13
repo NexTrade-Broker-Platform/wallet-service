@@ -69,7 +69,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("500.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.empty());
         when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
         when(walletTransactionRepository.save(any(WalletTransaction.class)))
@@ -95,7 +95,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("500.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
         when(walletTransactionRepository.save(any(WalletTransaction.class)))
@@ -122,7 +122,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("200.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
         when(walletTransactionRepository.save(any(WalletTransaction.class)))
@@ -147,7 +147,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("9999.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
 
         assertThatThrownBy(() -> walletService.withdraw(userId, request))
@@ -160,7 +160,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("100.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> walletService.withdraw(userId, request))
@@ -176,7 +176,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("300.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
         when(walletTransactionRepository.save(any(WalletTransaction.class)))
@@ -197,7 +197,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("9999.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
 
         assertThatThrownBy(() -> walletService.reserveFunds(request))
@@ -216,7 +216,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("300.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
         when(walletTransactionRepository.save(any(WalletTransaction.class)))
@@ -237,7 +237,7 @@ class WalletServiceTest {
         request.setAmount(new BigDecimal("9999.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
 
         assertThatThrownBy(() -> walletService.releaseFunds(request))
@@ -257,7 +257,7 @@ class WalletServiceTest {
         request.setActualCost(new BigDecimal("480.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
         when(walletTransactionRepository.save(any(WalletTransaction.class)))
@@ -279,7 +279,7 @@ class WalletServiceTest {
         request.setActualCost(new BigDecimal("9999.00"));
         request.setCurrency("USD");
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyForUpdate(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
 
         assertThatThrownBy(() -> walletService.captureFunds(request))
@@ -290,7 +290,7 @@ class WalletServiceTest {
 
     @Test
     void getWallet_shouldReturnWalletResponse() {
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
 
         WalletResponse response = walletService.getWallet(userId, "USD");
@@ -303,7 +303,7 @@ class WalletServiceTest {
 
     @Test
     void getWallet_shouldThrowWalletNotFoundException() {
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> walletService.getWallet(userId, "USD"))
@@ -322,7 +322,7 @@ class WalletServiceTest {
 
         Page<WalletTransaction> page = new PageImpl<>(List.of(transaction));
 
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.of(wallet));
         when(walletTransactionRepository.findAllByWalletId(any(UUID.class), any(Pageable.class)))
                 .thenReturn(page);
@@ -339,7 +339,7 @@ class WalletServiceTest {
 
     @Test
     void getTransactionHistory_shouldThrowWalletNotFoundException() {
-        when(walletRepository.findByUserIdAndCurrency(userId, "USD"))
+        when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> walletService.getTransactionHistory(userId, "USD", 1, 10))

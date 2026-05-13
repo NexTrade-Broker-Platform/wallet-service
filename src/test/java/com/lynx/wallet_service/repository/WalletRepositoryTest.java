@@ -70,7 +70,7 @@ class WalletRepositoryTest {
     }
 
     @Test
-    void findByUserIdAndCurrency_shouldReturnWallet() {
+    void findByUserIdAndCurrencyAndIsActiveTrue_shouldReturnWallet() {
         Wallet wallet = Wallet.builder()
                 .userId(userId)
                 .currency("USD")
@@ -80,7 +80,7 @@ class WalletRepositoryTest {
         walletRepository.save(wallet);
 
         Optional<Wallet> found = walletRepository
-                .findByUserIdAndCurrency(userId, "USD");
+                .findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD");
 
         assertThat(found).isPresent();
         assertThat(found.get().getCurrency()).isEqualTo("USD");
@@ -88,14 +88,31 @@ class WalletRepositoryTest {
     }
 
     @Test
-    void findByUserIdAndCurrency_shouldReturnEmptyWhenNotFound() {
+    void findByUserIdAndCurrencyAndIsActiveTrue_shouldReturnEmptyWhenNotFound() {
         Optional<Wallet> found = walletRepository
-                .findByUserIdAndCurrency(UUID.randomUUID(), "USD");
+                .findByUserIdAndCurrencyAndIsActiveTrue(UUID.randomUUID(), "USD");
         assertThat(found).isEmpty();
     }
 
     @Test
-    void findAllByUserId_shouldReturnAllWalletsForUser() {
+    void findByUserIdAndCurrencyAndIsActiveTrue_shouldReturnEmptyForInactiveWallet() {
+        Wallet wallet = Wallet.builder()
+                .userId(userId)
+                .currency("USD")
+                .availableBalance(new BigDecimal("500.00"))
+                .reservedBalance(BigDecimal.ZERO)
+                .build();
+        Wallet saved = walletRepository.save(wallet);
+        saved.setActive(false);
+        walletRepository.save(saved);
+
+        Optional<Wallet> found = walletRepository
+                .findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD");
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void findAllByUserIdAndIsActiveTrue_shouldReturnAllActiveWalletsForUser() {
         Wallet usdWallet = Wallet.builder()
                 .userId(userId)
                 .currency("USD")
@@ -113,7 +130,7 @@ class WalletRepositoryTest {
         walletRepository.save(usdWallet);
         walletRepository.save(eurWallet);
 
-        List<Wallet> wallets = walletRepository.findAllByUserId(userId);
+        List<Wallet> wallets = walletRepository.findAllByUserIdAndIsActiveTrue(userId);
 
         assertThat(wallets).hasSize(2);
         assertThat(wallets).extracting(Wallet::getCurrency)
