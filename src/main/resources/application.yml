@@ -2,13 +2,13 @@ spring:
   application:
     name: wallet-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/db_wallet
-    username: postgres
-    password: yourpassword
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/db_wallet}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     open-in-view: false
   flyway:
     enabled: true
@@ -17,4 +17,4 @@ server:
   port: 8082
 
 internal:
-  api-key: secret123
+  api-key: ${INTERNAL_API_KEY}
