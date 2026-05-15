@@ -185,7 +185,7 @@ public class WalletService {
         WalletTransaction transaction = WalletTransaction.builder()
                 .walletId(wallet.getId())
                 .referenceId(request.getReferenceId())
-                .transactionType(TransactionType.ORDER_HOLD)
+                .transactionType(TransactionType.ORDER_CAPTURE)
                 .amount(request.getActualCost())
                 .build();
         walletTransactionRepository.save(transaction);

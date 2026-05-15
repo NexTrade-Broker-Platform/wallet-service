@@ -4,5 +4,6 @@ public enum TransactionType {
     DEPOSIT,
     WITHDRAWAL,
     ORDER_HOLD,
-    ORDER_RELEASE
+    ORDER_RELEASE,
+    ORDER_CAPTURE
 }
