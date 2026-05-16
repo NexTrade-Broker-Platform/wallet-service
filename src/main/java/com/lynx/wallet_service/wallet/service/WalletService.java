@@ -81,7 +81,9 @@ public class WalletService {
     }
 
     public WalletResponse getWallet(UUID userId, String currency) {
-        Wallet wallet = findWalletByUserAndCurrency(userId, currency);
+        Wallet wallet = walletRepository
+                .findByUserIdAndCurrencyAndIsActiveTrue(userId, currency)
+                .orElseGet(() -> createWallet(userId, currency));
         return toWalletResponse(wallet);
     }
 
