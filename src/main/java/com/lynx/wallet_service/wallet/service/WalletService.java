@@ -115,6 +115,15 @@ public class WalletService {
                 .build();
     }
 
+    public List<TransactionResponse> getAllTransactions(UUID userId, String currency) {
+        return walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, currency)
+                .map(wallet -> walletTransactionRepository.findAllByWalletIdOrderByCreatedAtAsc(wallet.getId())
+                        .stream()
+                        .map(this::toTransactionResponse)
+                        .collect(Collectors.toList()))
+                .orElseGet(List::of);
+    }
+
     // ─── Internal operations (called by Order Service) ────────────────────────
 
     @Transactional
