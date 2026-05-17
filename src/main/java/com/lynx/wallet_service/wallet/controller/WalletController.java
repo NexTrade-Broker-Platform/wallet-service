@@ -54,8 +54,8 @@ public class WalletController {
     @GetMapping("/transactions")
     public ResponseEntity<TransactionHistoryResponse> getTransactionHistory(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestParam String currency,
-            @RequestParam(defaultValue = "1") @Min(value = 1, message = "Page must be at least 1") int page,
+            @RequestParam(required = false) String currency,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "Page must be at least 0") int page,
             @RequestParam(defaultValue = "10") @Min(value = 1, message = "Limit must be at least 1") @Max(value = 50, message = "Limit must be at most 50") int limit) {
         return ResponseEntity.ok(walletService.getTransactionHistory(userId, currency, page, limit));
     }

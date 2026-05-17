@@ -14,5 +14,5 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
 
     Page<WalletTransaction> findAllByWalletId(UUID walletId, Pageable pageable);
 
-    List<WalletTransaction> findAllByWalletIdOrderByCreatedAtAsc(UUID walletId);
+    Page<WalletTransaction> findAllByWalletIdIn(List<UUID> walletIds, Pageable pageable);
 }

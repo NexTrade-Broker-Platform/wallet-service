@@ -95,11 +95,19 @@ public class WalletService {
     }
 
     public TransactionHistoryResponse getTransactionHistory(UUID userId, String currency, int page, int limit) {
-        Wallet wallet = findWalletByUserAndCurrency(userId, currency);
+        Pageable pageable = PageRequest.of(page, limit, Sort.by("createdAt").descending());
 
-        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
-        Page<WalletTransaction> transactionPage = walletTransactionRepository
-                .findAllByWalletId(wallet.getId(), pageable);
+        Page<WalletTransaction> transactionPage;
+        if (currency != null && !currency.isBlank()) {
+            Wallet wallet = findWalletByUserAndCurrency(userId, currency);
+            transactionPage = walletTransactionRepository.findAllByWalletId(wallet.getId(), pageable);
+        } else {
+            List<UUID> walletIds = walletRepository.findAllByUserIdAndIsActiveTrue(userId)
+                    .stream()
+                    .map(Wallet::getId)
+                    .collect(Collectors.toList());
+            transactionPage = walletTransactionRepository.findAllByWalletIdIn(walletIds, pageable);
+        }
 
         List<TransactionResponse> transactions = transactionPage.getContent()
                 .stream()
