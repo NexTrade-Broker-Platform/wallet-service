@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -129,7 +130,7 @@ public class WalletService {
                         .stream()
                         .map(this::toTransactionResponse)
                         .collect(Collectors.toList()))
-                .orElseGet(List::of);
+                .orElseGet(Collections::emptyList);
     }
 
     // ─── Internal operations (called by Order Service) ────────────────────────
