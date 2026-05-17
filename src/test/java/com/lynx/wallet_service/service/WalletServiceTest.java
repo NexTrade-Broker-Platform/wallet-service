@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -311,7 +312,7 @@ class WalletServiceTest {
     }
 
     @Test
-    void getTransactionHistory_shouldReturnPaginatedTransactions() {
+    void getTransactionHistory_withCurrency_shouldReturnPaginatedTransactions() {
         WalletTransaction transaction = WalletTransaction.builder()
                 .id(UUID.randomUUID())
                 .walletId(wallet.getId())
@@ -327,22 +328,46 @@ class WalletServiceTest {
         when(walletTransactionRepository.findAllByWalletId(any(UUID.class), any(Pageable.class)))
                 .thenReturn(page);
 
-        TransactionHistoryResponse response = walletService.getTransactionHistory(userId, "USD", 1, 10);
+        TransactionHistoryResponse response = walletService.getTransactionHistory(userId, "USD", 0, 10);
 
         assertThat(response).isNotNull();
         assertThat(response.getTransactions()).hasSize(1);
         assertThat(response.getTotalRecords()).isEqualTo(1);
-        assertThat(response.getCurrentPage()).isEqualTo(1);
+        assertThat(response.getCurrentPage()).isEqualTo(0);
         assertThat(response.getTotalPages()).isEqualTo(1);
         assertThat(response.getLimit()).isEqualTo(10);
     }
 
     @Test
-    void getTransactionHistory_shouldThrowWalletNotFoundException() {
+    void getTransactionHistory_withoutCurrency_shouldReturnAllTransactions() {
+        WalletTransaction transaction = WalletTransaction.builder()
+                .id(UUID.randomUUID())
+                .walletId(wallet.getId())
+                .transactionType(TransactionType.DEPOSIT)
+                .amount(new BigDecimal("1000.00"))
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Page<WalletTransaction> page = new PageImpl<>(List.of(transaction));
+
+        when(walletRepository.findAllByUserIdAndIsActiveTrue(userId))
+                .thenReturn(List.of(wallet));
+        when(walletTransactionRepository.findAllByWalletIdIn(anyList(), any(Pageable.class)))
+                .thenReturn(page);
+
+        TransactionHistoryResponse response = walletService.getTransactionHistory(userId, null, 0, 10);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getTransactions()).hasSize(1);
+        assertThat(response.getCurrentPage()).isEqualTo(0);
+    }
+
+    @Test
+    void getTransactionHistory_withCurrency_shouldThrowWalletNotFoundException() {
         when(walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, "USD"))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> walletService.getTransactionHistory(userId, "USD", 1, 10))
+        assertThatThrownBy(() -> walletService.getTransactionHistory(userId, "USD", 0, 10))
                 .isInstanceOf(WalletNotFoundException.class);
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -31,6 +32,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientReservedBalanceException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientReservedBalance(InsufficientReservedBalanceException ex) {
         return buildError("INSUFFICIENT_RESERVED_BALANCE", ex.getMessage(), new HashMap<>(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParam(MissingServletRequestParameterException ex) {
+        Map<String, String> details = new HashMap<>();
+        details.put(ex.getParameterName(), ex.getParameterName() + " is required");
+        return buildError("VALIDATION_ERROR", "The request payload failed validation.", details, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
