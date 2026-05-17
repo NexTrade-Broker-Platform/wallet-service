@@ -4,11 +4,14 @@ import com.lynx.wallet_service.wallet.exception.InsufficientFundsException;
 import com.lynx.wallet_service.wallet.exception.InsufficientReservedBalanceException;
 import com.lynx.wallet_service.wallet.exception.WalletNotFoundException;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,6 +21,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(WalletNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleWalletNotFound(WalletNotFoundException ex) {
@@ -65,8 +70,16 @@ public class GlobalExceptionHandler {
         return buildError("VALIDATION_ERROR", "The request payload failed validation.", details, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingHeader(MissingRequestHeaderException ex) {
+        Map<String, String> details = new HashMap<>();
+        details.put(ex.getHeaderName(), ex.getHeaderName() + " header is required");
+        return buildError("VALIDATION_ERROR", "Required request header is missing.", details, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        log.error("Unhandled exception", ex);
         return buildError("INTERNAL_SERVER_ERROR", "Something went wrong on the server.", new HashMap<>(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

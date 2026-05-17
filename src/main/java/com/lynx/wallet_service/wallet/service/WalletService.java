@@ -107,6 +107,15 @@ public class WalletService {
                     .stream()
                     .map(Wallet::getId)
                     .collect(Collectors.toList());
+            if (walletIds.isEmpty()) {
+                return TransactionHistoryResponse.builder()
+                        .transactions(List.of())
+                        .totalRecords(0)
+                        .currentPage(page)
+                        .totalPages(0)
+                        .limit(limit)
+                        .build();
+            }
             transactionPage = walletTransactionRepository.findAllByWalletIdIn(walletIds, pageable);
         }
 
