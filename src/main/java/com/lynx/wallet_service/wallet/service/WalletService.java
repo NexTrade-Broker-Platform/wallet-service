@@ -81,7 +81,9 @@ public class WalletService {
     }
 
     public WalletResponse getWallet(UUID userId, String currency) {
-        Wallet wallet = findWalletByUserAndCurrency(userId, currency);
+        Wallet wallet = walletRepository
+                .findByUserIdAndCurrencyAndIsActiveTrue(userId, currency)
+                .orElseGet(() -> createWallet(userId, currency));
         return toWalletResponse(wallet);
     }
 
@@ -119,6 +121,15 @@ public class WalletService {
                 .totalPages(transactionPage.getTotalPages())
                 .limit(limit)
                 .build();
+    }
+
+    public List<TransactionResponse> getAllTransactions(UUID userId, String currency) {
+        return walletRepository.findByUserIdAndCurrencyAndIsActiveTrue(userId, currency)
+                .map(wallet -> walletTransactionRepository.findAllByWalletIdOrderByCreatedAtAsc(wallet.getId())
+                        .stream()
+                        .map(this::toTransactionResponse)
+                        .collect(Collectors.toList()))
+                .orElseGet(List::of);
     }
 
     // ─── Internal operations (called by Order Service) ────────────────────────
@@ -193,7 +204,7 @@ public class WalletService {
         WalletTransaction transaction = WalletTransaction.builder()
                 .walletId(wallet.getId())
                 .referenceId(request.getReferenceId())
-                .transactionType(TransactionType.ORDER_HOLD)
+                .transactionType(TransactionType.ORDER_CAPTURE)
                 .amount(request.getActualCost())
                 .build();
         walletTransactionRepository.save(transaction);
