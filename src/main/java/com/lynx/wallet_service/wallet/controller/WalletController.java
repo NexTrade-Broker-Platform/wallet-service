@@ -41,7 +41,7 @@ public class WalletController {
     @GetMapping
     public ResponseEntity<WalletResponse> getWallet(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestParam String currency) {
+            @RequestParam(defaultValue = "USD") String currency) {
         return ResponseEntity.ok(walletService.getWallet(userId, currency));
     }
 
