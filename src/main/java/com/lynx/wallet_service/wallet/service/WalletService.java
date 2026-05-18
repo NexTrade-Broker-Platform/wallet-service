@@ -142,6 +142,20 @@ public class WalletService {
                 .orElseGet(Collections::emptyList);
     }
 
+    // ─── Admin operations ───────────────────────────────────────────────────
+
+    public BigDecimal getTotalSystemValue() {
+        return walletRepository.findAll().stream()
+                .map(w -> w.getAvailableBalance().add(w.getReservedBalance()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public List<WalletResponse> getAllSystemWallets() {
+        return walletRepository.findAll().stream()
+                .map(this::toWalletResponse)
+                .collect(Collectors.toList());
+    }
+
     // ─── Internal operations (called by Order Service) ────────────────────────
 
     @Transactional

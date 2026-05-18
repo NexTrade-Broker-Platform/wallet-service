@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -91,5 +92,17 @@ public class WalletController {
     public ResponseEntity<Void> createWallet(@Valid @RequestBody CreateWalletRequest request) {
         walletService.createWalletforUser(request);
         return ResponseEntity.ok().build();
+    }
+
+    // ─── Admin endpoints ──────────────────────────────────────────────────────
+
+    @GetMapping("/internal/total-money")
+    public ResponseEntity<BigDecimal> getTotalSystemMoney() {
+        return ResponseEntity.ok(walletService.getTotalSystemValue());
+    }
+
+    @GetMapping("/internal/balances")
+    public ResponseEntity<List<WalletResponse>> getAllSystemBalances() {
+        return ResponseEntity.ok(walletService.getAllSystemWallets());
     }
 }
